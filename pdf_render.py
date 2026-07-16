@@ -170,6 +170,7 @@ def render_cv_pdf(cv_data: dict) -> bytes:
         section_header("JĘZYKI OBCE")
         story.append(_bullet_list(languages, styles["body"]))
 
+    section_header("KLAUZULA RODO")
     story.append(Paragraph(_esc(cv_data.get("rodo_clause")), styles["rodo"]))
 
     doc.build(story)
