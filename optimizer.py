@@ -184,7 +184,7 @@ Powyżej załączony jest oryginalny plik PDF z CV kandydata (może być tekstow
         max_tokens=8000,
         thinking={"type": "adaptive"},
         output_config={
-            "effort": "high",
+            "effort": "medium",
             "format": {
                 "type": "json_schema",
                 "schema": CV_JSON_SCHEMA,

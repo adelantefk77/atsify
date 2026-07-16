@@ -175,6 +175,15 @@
 </div>
 </footer>
 <script>
+        function _base64ToBlob(base64, mimeType) {
+            const byteChars = atob(base64);
+            const byteNumbers = new Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) {
+                byteNumbers[i] = byteChars.charCodeAt(i);
+            }
+            return new Blob([new Uint8Array(byteNumbers)], { type: mimeType });
+        }
+
         const raw = sessionStorage.getItem('atsify_result');
         if (!raw) {
             window.location.href = '/upload';
@@ -187,7 +196,11 @@
             const offset = circumference - (score / 100) * circumference;
             document.getElementById('score-circle').setAttribute('stroke-dashoffset', offset);
 
-            document.getElementById('download-link').setAttribute('href', data.download_url);
+            const pdfBlob = _base64ToBlob(data.pdf_base64, 'application/pdf');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.setAttribute('href', pdfUrl);
+            downloadLink.setAttribute('download', data.filename || 'CV_ATS.pdf');
 
             const list = document.getElementById('changes-list');
             const changes = Array.isArray(data.changes) ? data.changes : [];

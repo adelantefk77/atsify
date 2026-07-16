@@ -1,10 +1,10 @@
+import base64
 import re
-import uuid
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
@@ -15,14 +15,9 @@ from pdf_render import render_cv_pdf  # noqa: E402
 
 BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
-OUTPUTS_DIR = BASE_DIR / "outputs"
-OUTPUTS_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(title="ATSify")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
-
-# In-memory store for results of the current server session.
-RESULTS: dict[str, dict] = {}
 
 MAX_PDF_SIZE = 5 * 1024 * 1024  # 5 MB
 UPLOAD_CHUNK_SIZE = 64 * 1024
@@ -108,53 +103,17 @@ async def api_optimize(cv_file: UploadFile = File(...), job_posting: str = Form(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Błąd podczas generowania pliku PDF: {exc}") from exc
 
-    result_id = uuid.uuid4().hex
-    pdf_path = OUTPUTS_DIR / f"{result_id}.pdf"
-    pdf_path.write_bytes(pdf_bytes)
-
-    safe_name = _safe_filename_component(cv_data["contact"]["name"])
+    safe_name = _safe_filename_component(cv_data.get("contact", {}).get("name", ""))
     filename = f"{safe_name}_CV_ATS.pdf"
 
-    RESULTS[result_id] = {
-        "filename": filename,
-        "pdf_path": str(pdf_path),
-        "match_score": cv_data.get("match_score", 0),
-        "changes": cv_data.get("changes", []),
-        "contact": cv_data.get("contact", {}),
-    }
-
+    # Stateless response: no server-side storage between requests (required for
+    # serverless deployment) — the client holds onto the base64 PDF itself and
+    # builds the download locally.
     return JSONResponse(
         {
-            "id": result_id,
             "match_score": cv_data.get("match_score", 0),
             "changes": cv_data.get("changes", []),
             "filename": filename,
-            "download_url": f"/api/download/{result_id}",
+            "pdf_base64": base64.standard_b64encode(pdf_bytes).decode("ascii"),
         }
-    )
-
-
-@app.get("/api/result/{result_id}")
-def api_result(result_id: str):
-    result = RESULTS.get(result_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Nie znaleziono wyniku (serwer mógł zostać zrestartowany).")
-    return {
-        "id": result_id,
-        "match_score": result["match_score"],
-        "changes": result["changes"],
-        "filename": result["filename"],
-        "download_url": f"/api/download/{result_id}",
-    }
-
-
-@app.get("/api/download/{result_id}")
-def api_download(result_id: str):
-    result = RESULTS.get(result_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Nie znaleziono pliku.")
-    return FileResponse(
-        result["pdf_path"],
-        media_type="application/pdf",
-        filename=result["filename"],
     )

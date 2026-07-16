@@ -1,7 +1,6 @@
 fastapi
 uvicorn[standard]
 anthropic
-weasyprint
-jinja2
+reportlab
 python-multipart
 python-dotenv
