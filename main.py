@@ -5,6 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
 load_dotenv()
@@ -16,6 +17,7 @@ BASE_DIR = Path(__file__).parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 
 app = FastAPI(title="ATSify")
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 MAX_PDF_SIZE = 5 * 1024 * 1024  # 5 MB
 UPLOAD_CHUNK_SIZE = 64 * 1024
