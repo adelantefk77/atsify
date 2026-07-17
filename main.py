@@ -10,6 +10,7 @@ from starlette.concurrency import run_in_threadpool
 
 load_dotenv()
 
+from docx_render import render_cv_docx  # noqa: E402
 from optimizer import is_valid_pdf, optimize_cv  # noqa: E402
 from pdf_render import render_cv_pdf  # noqa: E402
 
@@ -103,17 +104,23 @@ async def api_optimize(cv_file: UploadFile = File(...), job_posting: str = Form(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Błąd podczas generowania pliku PDF: {exc}") from exc
 
+    try:
+        docx_bytes = await run_in_threadpool(render_cv_docx, cv_data)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Błąd podczas generowania pliku DOCX: {exc}") from exc
+
     safe_name = _safe_filename_component(cv_data.get("contact", {}).get("name", ""))
-    filename = f"{safe_name}_CV_ATS.pdf"
 
     # Stateless response: no server-side storage between requests (required for
-    # serverless deployment) — the client holds onto the base64 PDF itself and
-    # builds the download locally.
+    # serverless deployment) — the client holds onto the base64 files itself and
+    # builds the downloads locally.
     return JSONResponse(
         {
             "match_score": cv_data.get("match_score", 0),
             "changes": cv_data.get("changes", []),
-            "filename": filename,
+            "pdf_filename": f"{safe_name}_CV_ATS.pdf",
             "pdf_base64": base64.standard_b64encode(pdf_bytes).decode("ascii"),
+            "docx_filename": f"{safe_name}_CV_ATS.docx",
+            "docx_base64": base64.standard_b64encode(docx_bytes).decode("ascii"),
         }
     )
