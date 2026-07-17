@@ -262,9 +262,16 @@
                     const li = document.createElement('li');
                     li.className = 'flex items-start gap-4';
 
+                    const changeStyles = {
+                        removed: { bg: 'bg-surface-container-high', text: 'text-on-surface-variant', icon: 'remove_circle' },
+                        reworded: { bg: 'bg-primary-fixed', text: 'text-on-primary-fixed', icon: 'edit' },
+                        added: { bg: 'bg-secondary-container', text: 'text-on-secondary-container', icon: 'check' },
+                    };
+                    const changeStyle = changeStyles[change.type] || changeStyles.added;
+
                     const iconWrap = document.createElement('div');
-                    iconWrap.className = 'w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0 mt-0.5';
-                    iconWrap.innerHTML = '<span class="material-symbols-outlined text-on-secondary-container text-sm">check</span>';
+                    iconWrap.className = `w-8 h-8 rounded-full ${changeStyle.bg} flex items-center justify-center flex-shrink-0 mt-0.5`;
+                    iconWrap.innerHTML = `<span class="material-symbols-outlined ${changeStyle.text} text-sm">${changeStyle.icon}</span>`;
                     li.appendChild(iconWrap);
 
                     const content = document.createElement('div');
