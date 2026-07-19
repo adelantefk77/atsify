@@ -41,7 +41,7 @@ Dopiero do tak przefiltrowanej, istotnej treści zastosuj poniższe zasady optym
 - Format dat: MM/RRRR konsekwentnie w całym dokumencie.
 - Punktory: krótkie, konkretne zdania. Każdy punkt w doświadczeniu zaczyna się od mocnego czasownika (zarządzałem, wdrożyłem, zoptymalizowałem, zwiększyłem, zredukowałem, opracowałem, koordynowałem...), z liczbami/wynikami wszędzie tam, gdzie są dostępne w oryginalnym CV.
 - Doświadczenie zawodowe w kolejności odwrotnie chronologicznej — najnowsze/obecne stanowisko zawsze pierwsze w liście.
-- Standardowe sekcje po polsku, dokładnie w tej kolejności: Dane kontaktowe, Podsumowanie zawodowe, Doświadczenie zawodowe, Wykształcenie, Umiejętności, Certyfikaty/szkolenia (jeśli dotyczy), Języki obce, Klauzula RODO. Nie wymyślaj własnych nazw sekcji.
+- Ustrukturyzuj treść dokładnie w tej kolejności koncepcyjnej: dane kontaktowe, podsumowanie zawodowe, doświadczenie zawodowe, wykształcenie, umiejętności, certyfikaty/szkolenia (jeśli dotyczy), języki obce, klauzula RODO/GDPR. Same nazwy i nagłówki sekcji w dokumencie ustala aplikacja (nie Ty) — Twoim zadaniem jest wypełnić treścią odpowiednie pola JSON. Nie wymyślaj własnych, nietypowych kategorii (dotyczy to też np. nazw w polu `skills[].category`) — pisz je w języku CV wskazanym w sekcji "Język CV" poniżej.
 - Podsumowanie zawodowe: 3–5 zdań, z wplecionymi 3–5 najważniejszymi słowami kluczowymi z ogłoszenia. Nie pisz generycznych fraz jak "dynamiczny profesjonalista" czy "zorientowany na wyniki" — tylko konkretne fakty i liczby.
 - Umiejętności: lista 8–15 pozycji łącznie (across all categories), używająca pełnych nazw + skrótów.
 - Klauzula RODO: jeśli ogłoszenie zawiera własną klauzulę, użyj jej dokładnej treści; w przeciwnym razie użyj standardowej klauzuli zgodnej z RODO (UE 2016/679), NIGDY starej klauzuli z ustawy z 1997 r.
@@ -76,11 +76,13 @@ Wygeneruj całą treść CV (contact.professional_title, summary, experience[], 
     "en": """
 ### CV Language
 
-Generate ALL CV content fields (contact.professional_title, summary, experience[], education[], skills[], certifications[], languages[], rodo_clause) in ENGLISH. Translate and adapt naturally — do not produce a literal/word-for-word translation of Polish phrasing. Use the English form of place names where a natural one exists (e.g. "Warsaw" not "Warszawa"); leave phone numbers and email addresses unchanged.
+Generate ALL CV content fields (contact.professional_title, summary, experience[], education[], skills[], certifications[], languages[], rodo_clause) in ENGLISH. Translate and adapt naturally — do not produce a literal/word-for-word translation of Polish phrasing. Use the English form of place names where a natural one exists (e.g. "Warsaw" not "Warszawa"); leave phone numbers and email addresses unchanged. Do NOT translate proper nouns — company names, school/university names, brand names, and named tools/systems (e.g. software product names) must stay in their original form even though everything around them is in English.
 
 The job posting may be in Polish — still analyze it in Polish to extract requirements and keywords, but write the OUTPUT CV content in natural, idiomatic English, translating matched keywords/terminology accordingly (keep an already-English term like "Search Engine Optimization (SEO)" as-is; translate Polish job-duty phrasing into natural English rather than leaving it in Polish).
 
 RODO/GDPR clause: if the job posting supplies its own data-consent clause, use its exact original wording verbatim (even if that means it stays in Polish, since it may be a legally exact text) — do not translate a posting-supplied clause. Only when the posting has no clause of its own, use this standard English clause: "I hereby give my consent for my personal data included in this document to be processed for the purposes of this recruitment process, in accordance with Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April 2016 (GDPR)."
+
+`changes[].keywords`: list the keyword/phrase in the same language it actually appears in the generated CV (i.e. in English), even though `changes[].title`/`.description` stay in Polish per the rule below.
 
 IMPORTANT — the `changes` list is shown to this Polish-speaking tool's user as an in-app summary, not part of the CV document itself: always write `changes[].title` and `changes[].description` in POLISH regardless of the CV's output language chosen above.
 """,
