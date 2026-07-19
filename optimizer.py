@@ -67,6 +67,25 @@ Zwróć wyłącznie dane w podanym schemacie JSON:
 3. Listę konkretnych zmian, które wprowadziłeś względem oryginalnego CV (co usunięto jako niezwiązane z ofertą, co dodano, co przeformułowano, jakie słowa kluczowe wpleciono) — to będzie pokazane użytkownikowi jako podsumowanie zmian. Dla każdej zmiany ustaw pole `type`: "removed" dla usuniętych treści (KROK 1), "added" gdy dodałeś coś nowego (np. nową kategorię umiejętności), "reworded" gdy przeformułowałeś/wzmocniłeś istniejącą treść.
 """
 
+LANGUAGE_INSTRUCTIONS = {
+    "pl": """
+### Język CV
+
+Wygeneruj całą treść CV (contact.professional_title, summary, experience[], education[], skills[], certifications[], languages[], rodo_clause) w JĘZYKU POLSKIM.
+""",
+    "en": """
+### CV Language
+
+Generate ALL CV content fields (contact.professional_title, summary, experience[], education[], skills[], certifications[], languages[], rodo_clause) in ENGLISH. Translate and adapt naturally — do not produce a literal/word-for-word translation of Polish phrasing. Use the English form of place names where a natural one exists (e.g. "Warsaw" not "Warszawa"); leave phone numbers and email addresses unchanged.
+
+The job posting may be in Polish — still analyze it in Polish to extract requirements and keywords, but write the OUTPUT CV content in natural, idiomatic English, translating matched keywords/terminology accordingly (keep an already-English term like "Search Engine Optimization (SEO)" as-is; translate Polish job-duty phrasing into natural English rather than leaving it in Polish).
+
+RODO/GDPR clause: if the job posting supplies its own data-consent clause, use its exact original wording verbatim (even if that means it stays in Polish, since it may be a legally exact text) — do not translate a posting-supplied clause. Only when the posting has no clause of its own, use this standard English clause: "I hereby give my consent for my personal data included in this document to be processed for the purposes of this recruitment process, in accordance with Regulation (EU) 2016/679 of the European Parliament and of the Council of 27 April 2016 (GDPR)."
+
+IMPORTANT — the `changes` list is shown to this Polish-speaking tool's user as an in-app summary, not part of the CV document itself: always write `changes[].title` and `changes[].description` in POLISH regardless of the CV's output language chosen above.
+""",
+}
+
 CV_JSON_SCHEMA = {
     "type": "object",
     "properties": {
@@ -165,9 +184,11 @@ def is_valid_pdf(file_bytes: bytes) -> bool:
     return file_bytes[:5] == b"%PDF-"
 
 
-def optimize_cv(cv_bytes: bytes, job_posting: str) -> dict:
+def optimize_cv(cv_bytes: bytes, job_posting: str, language: str = "pl") -> dict:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     client = anthropic.Anthropic(api_key=api_key)
+
+    system_prompt = SYSTEM_PROMPT + LANGUAGE_INSTRUCTIONS.get(language, LANGUAGE_INSTRUCTIONS["pl"])
 
     cv_b64 = base64.standard_b64encode(cv_bytes).decode("ascii")
 
@@ -204,7 +225,7 @@ Powyżej załączony jest oryginalny plik PDF z CV kandydata (może być tekstow
                 "schema": CV_JSON_SCHEMA,
             },
         },
-        system=SYSTEM_PROMPT,
+        system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     )
 

@@ -8,6 +8,29 @@ from docx.shared import Cm, Pt
 
 FONT_NAME = "Calibri"
 
+SECTION_LABELS = {
+    "pl": {
+        "contact": "Dane kontaktowe",
+        "summary": "Podsumowanie zawodowe",
+        "experience": "Doświadczenie zawodowe",
+        "education": "Wykształcenie",
+        "skills": "Umiejętności",
+        "certifications": "Certyfikaty / szkolenia",
+        "languages": "Języki obce",
+        "rodo": "Klauzula RODO",
+    },
+    "en": {
+        "contact": "Contact Information",
+        "summary": "Professional Summary",
+        "experience": "Professional Experience",
+        "education": "Education",
+        "skills": "Skills",
+        "certifications": "Certifications / Training",
+        "languages": "Languages",
+        "rodo": "GDPR Consent",
+    },
+}
+
 
 def _heading(doc, text):
     p = doc.add_paragraph()
@@ -55,7 +78,9 @@ def _bullet(doc, text, size=11):
     return p
 
 
-def render_cv_docx(cv_data: dict) -> bytes:
+def render_cv_docx(cv_data: dict, language: str = "pl") -> bytes:
+    labels = SECTION_LABELS.get(language, SECTION_LABELS["pl"])
+
     doc = Document()
 
     for section in doc.sections:
@@ -72,7 +97,7 @@ def render_cv_docx(cv_data: dict) -> bytes:
 
     contact = cv_data.get("contact") or {}
 
-    _heading(doc, "Dane kontaktowe")
+    _heading(doc, labels["contact"])
 
     p_name = doc.add_paragraph()
     p_name.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -91,12 +116,12 @@ def render_cv_docx(cv_data: dict) -> bytes:
     if contact.get("linkedin"):
         _para(doc, contact["linkedin"], size=10, alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
-    _heading(doc, "Podsumowanie zawodowe")
+    _heading(doc, labels["summary"])
     _para(doc, cv_data.get("summary"))
 
     experience = cv_data.get("experience") or []
     if experience:
-        _heading(doc, "Doświadczenie zawodowe")
+        _heading(doc, labels["experience"])
         for job in experience:
             meta = " | ".join(filter(None, [job.get("company"), job.get("location"), job.get("dates")]))
             _para(doc, job.get("title"), bold=True, space_after=0)
@@ -107,7 +132,7 @@ def render_cv_docx(cv_data: dict) -> bytes:
 
     education = cv_data.get("education") or []
     if education:
-        _heading(doc, "Wykształcenie")
+        _heading(doc, labels["education"])
         for edu in education:
             meta = " | ".join(filter(None, [edu.get("school"), edu.get("location"), edu.get("dates")]))
             _para(doc, edu.get("degree"), bold=True, space_after=0)
@@ -118,7 +143,7 @@ def render_cv_docx(cv_data: dict) -> bytes:
 
     skills = cv_data.get("skills") or []
     if skills:
-        _heading(doc, "Umiejętności")
+        _heading(doc, labels["skills"])
         for group in skills:
             items = ", ".join(group.get("items") or [])
             p = doc.add_paragraph()
@@ -133,17 +158,17 @@ def render_cv_docx(cv_data: dict) -> bytes:
 
     certifications = cv_data.get("certifications") or []
     if certifications:
-        _heading(doc, "Certyfikaty / szkolenia")
+        _heading(doc, labels["certifications"])
         for c in certifications:
             _bullet(doc, c)
 
     languages = cv_data.get("languages") or []
     if languages:
-        _heading(doc, "Języki obce")
+        _heading(doc, labels["languages"])
         for lang in languages:
             _bullet(doc, lang)
 
-    _heading(doc, "Klauzula RODO")
+    _heading(doc, labels["rodo"])
     _para(doc, cv_data.get("rodo_clause"), size=8, italic=True)
 
     buffer = BytesIO()

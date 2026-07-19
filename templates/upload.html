@@ -199,7 +199,15 @@
 </div>
 </div>
 <div id="error-banner" class="hidden w-full max-w-2xl mx-auto bg-error-container text-on-error-container rounded-lg px-4 py-3 text-body-md font-body-md"></div>
-<div class="w-full flex justify-center mt-8 mb-16">
+<div class="w-full flex flex-col items-center gap-4 mt-8 mb-16">
+<div class="flex items-center gap-3">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Język nowego CV:</span>
+<div class="relative inline-flex items-center bg-surface-container-high rounded-full p-1" id="language-toggle">
+<div id="language-toggle-thumb" class="absolute top-1 left-1 w-16 h-9 bg-primary rounded-full transition-transform duration-200 ease-out"></div>
+<button type="button" data-value="pl" id="lang-pl-btn" class="relative z-10 w-16 h-9 flex items-center justify-center text-body-md font-body-md font-medium rounded-full transition-colors duration-200">PL</button>
+<button type="button" data-value="en" id="lang-en-btn" class="relative z-10 w-16 h-9 flex items-center justify-center text-body-md font-body-md font-medium rounded-full transition-colors duration-200">EN</button>
+</div>
+</div>
 <button id="submit-btn" class="bg-secondary text-on-secondary px-8 py-4 rounded-full text-headline-md font-headline-md font-medium hover:bg-on-secondary-fixed-variant transition-all shadow-md hover:shadow-lg hover:-translate-y-1 duration-300 flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0">
 <span class="material-symbols-outlined" id="submit-icon" style="font-variation-settings: 'FILL' 1;">auto_fix_high</span>
 <span id="submit-label">Optymalizuj CV</span>
@@ -228,6 +236,24 @@
         const errorBanner = document.getElementById('error-banner');
         const stepperProgress = document.getElementById('stepper-progress');
         const step2Circle = document.getElementById('step-2-circle');
+
+        const langPlBtn = document.getElementById('lang-pl-btn');
+        const langEnBtn = document.getElementById('lang-en-btn');
+        const languageThumb = document.getElementById('language-toggle-thumb');
+        let selectedLanguage = 'pl';
+
+        function updateLanguageToggle() {
+            const isEn = selectedLanguage === 'en';
+            languageThumb.style.transform = isEn ? 'translateX(4rem)' : 'translateX(0)';
+            langPlBtn.classList.toggle('text-on-primary', !isEn);
+            langPlBtn.classList.toggle('text-on-surface-variant', isEn);
+            langEnBtn.classList.toggle('text-on-primary', isEn);
+            langEnBtn.classList.toggle('text-on-surface-variant', !isEn);
+        }
+
+        langPlBtn.addEventListener('click', () => { selectedLanguage = 'pl'; updateLanguageToggle(); });
+        langEnBtn.addEventListener('click', () => { selectedLanguage = 'en'; updateLanguageToggle(); });
+        updateLanguageToggle();
 
         let selectedFile = null;
 
@@ -309,6 +335,7 @@
             const formData = new FormData();
             formData.append('cv_file', selectedFile);
             formData.append('job_posting', jobPosting.value.trim());
+            formData.append('language', selectedLanguage);
 
             try {
                 const res = await fetch('/api/optimize', { method: 'POST', body: formData });

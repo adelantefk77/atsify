@@ -24,6 +24,7 @@ MAX_PDF_SIZE = 5 * 1024 * 1024  # 5 MB
 UPLOAD_CHUNK_SIZE = 64 * 1024
 MIN_JOB_POSTING_CHARS = 100
 MAX_JOB_POSTING_CHARS = 5000
+ALLOWED_LANGUAGES = {"pl", "en"}
 
 
 def _read_template(name: str) -> str:
@@ -68,9 +69,16 @@ def result_page():
 
 
 @app.post("/api/optimize")
-async def api_optimize(cv_file: UploadFile = File(...), job_posting: str = Form(...)):
+async def api_optimize(
+    cv_file: UploadFile = File(...),
+    job_posting: str = Form(...),
+    language: str = Form("pl"),
+):
     if cv_file.content_type != "application/pdf" and not cv_file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Plik CV musi być w formacie PDF.")
+
+    if language not in ALLOWED_LANGUAGES:
+        raise HTTPException(status_code=400, detail="Nieobsługiwany język CV.")
 
     file_bytes = await _read_upload_capped(cv_file, MAX_PDF_SIZE)
 
@@ -93,19 +101,19 @@ async def api_optimize(cv_file: UploadFile = File(...), job_posting: str = Form(
         )
 
     try:
-        cv_data = await run_in_threadpool(optimize_cv, file_bytes, job_posting)
+        cv_data = await run_in_threadpool(optimize_cv, file_bytes, job_posting, language)
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Błąd podczas optymalizacji CV: {exc}") from exc
 
     try:
-        pdf_bytes = await run_in_threadpool(render_cv_pdf, cv_data)
+        pdf_bytes = await run_in_threadpool(render_cv_pdf, cv_data, language)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Błąd podczas generowania pliku PDF: {exc}") from exc
 
     try:
-        docx_bytes = await run_in_threadpool(render_cv_docx, cv_data)
+        docx_bytes = await run_in_threadpool(render_cv_docx, cv_data, language)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Błąd podczas generowania pliku DOCX: {exc}") from exc
 

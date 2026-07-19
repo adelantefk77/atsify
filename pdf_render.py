@@ -38,6 +38,30 @@ pdfmetrics.registerFontFamily(
 )
 
 
+SECTION_LABELS = {
+    "pl": {
+        "contact": "DANE KONTAKTOWE",
+        "summary": "PODSUMOWANIE ZAWODOWE",
+        "experience": "DOŚWIADCZENIE ZAWODOWE",
+        "education": "WYKSZTAŁCENIE",
+        "skills": "UMIEJĘTNOŚCI",
+        "certifications": "CERTYFIKATY / SZKOLENIA",
+        "languages": "JĘZYKI OBCE",
+        "rodo": "KLAUZULA RODO",
+    },
+    "en": {
+        "contact": "CONTACT INFORMATION",
+        "summary": "PROFESSIONAL SUMMARY",
+        "experience": "PROFESSIONAL EXPERIENCE",
+        "education": "EDUCATION",
+        "skills": "SKILLS",
+        "certifications": "CERTIFICATIONS / TRAINING",
+        "languages": "LANGUAGES",
+        "rodo": "GDPR CONSENT",
+    },
+}
+
+
 def _esc(value) -> str:
     return escape(str(value or ""))
 
@@ -95,7 +119,9 @@ def _bullet_list(items, style) -> ListFlowable:
     )
 
 
-def render_cv_pdf(cv_data: dict) -> bytes:
+def render_cv_pdf(cv_data: dict, language: str = "pl") -> bytes:
+    labels = SECTION_LABELS.get(language, SECTION_LABELS["pl"])
+
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -115,7 +141,7 @@ def render_cv_pdf(cv_data: dict) -> bytes:
 
     contact = cv_data.get("contact") or {}
 
-    section_header("DANE KONTAKTOWE")
+    section_header(labels["contact"])
     story.append(Paragraph(_esc(contact.get("name")), styles["name"]))
     if contact.get("professional_title"):
         story.append(Paragraph(_esc(contact["professional_title"]), styles["title"]))
@@ -126,12 +152,12 @@ def render_cv_pdf(cv_data: dict) -> bytes:
         story.append(Paragraph(_esc(contact["linkedin"]), styles["contact"]))
     story.append(Spacer(1, 4))
 
-    section_header("PODSUMOWANIE ZAWODOWE")
+    section_header(labels["summary"])
     story.append(Paragraph(_esc(cv_data.get("summary")), styles["body_justify"]))
 
     experience = cv_data.get("experience") or []
     if experience:
-        section_header("DOŚWIADCZENIE ZAWODOWE")
+        section_header(labels["experience"])
         for job in experience:
             meta = " | ".join(filter(None, [job.get("company"), job.get("location"), job.get("dates")]))
             story.append(Paragraph(f"<b>{_esc(job.get('title'))}</b>", styles["entry_title"]))
@@ -143,7 +169,7 @@ def render_cv_pdf(cv_data: dict) -> bytes:
 
     education = cv_data.get("education") or []
     if education:
-        section_header("WYKSZTAŁCENIE")
+        section_header(labels["education"])
         for edu in education:
             meta = " | ".join(filter(None, [edu.get("school"), edu.get("location"), edu.get("dates")]))
             story.append(Paragraph(f"<b>{_esc(edu.get('degree'))}</b>", styles["entry_title"]))
@@ -155,22 +181,22 @@ def render_cv_pdf(cv_data: dict) -> bytes:
 
     skills = cv_data.get("skills") or []
     if skills:
-        section_header("UMIEJĘTNOŚCI")
+        section_header(labels["skills"])
         for group in skills:
             items = ", ".join(group.get("items") or [])
             story.append(Paragraph(f"<b>{_esc(group.get('category'))}:</b> {_esc(items)}", styles["skills_line"]))
 
     certifications = cv_data.get("certifications") or []
     if certifications:
-        section_header("CERTYFIKATY / SZKOLENIA")
+        section_header(labels["certifications"])
         story.append(_bullet_list(certifications, styles["body"]))
 
     languages = cv_data.get("languages") or []
     if languages:
-        section_header("JĘZYKI OBCE")
+        section_header(labels["languages"])
         story.append(_bullet_list(languages, styles["body"]))
 
-    section_header("KLAUZULA RODO")
+    section_header(labels["rodo"])
     story.append(Paragraph(_esc(cv_data.get("rodo_clause")), styles["rodo"]))
 
     doc.build(story)
