@@ -243,7 +243,7 @@
 
             function incrementBeerCount() {
                 const stored = parseInt(localStorage.getItem(BEER_COUNT_KEY), 10);
-                const current = Number.isFinite(stored) ? stored : 5;
+                const current = Number.isFinite(stored) ? stored : 9;
                 const next = current + 1;
                 localStorage.setItem(BEER_COUNT_KEY, String(next));
                 return next;
